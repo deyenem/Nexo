@@ -13,7 +13,7 @@ using Nexo.Models;
 using Nexo.Services;
 using Xamarin.Forms;
 
-[assembly: Dependency(typeof(FileService))]
+[assembly: Xamarin.Forms.Dependency(typeof(FileService))]
 namespace Nexo.Droid
 {
     public class FileService : IFileService

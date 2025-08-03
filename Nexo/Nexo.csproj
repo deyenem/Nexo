@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <ProduceReferenceAssemblyInOutDir>true</ProduceReferenceAssemblyInOutDir>
   </PropertyGroup>
@@ -34,5 +35,11 @@
     <EmbeddedResource Update="Views\WiFiSettingsPage.xaml">
       <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- Explicitly exclude the root MainPage files to avoid conflicts -->
+  <ItemGroup>
+    <Compile Remove="MainPage.xaml.cs" />
+    <EmbeddedResource Remove="MainPage.xaml" />
   </ItemGroup>
 </Project>

@@ -8,7 +8,7 @@
 		<item name="windowNoTitle">true</item>
 	</style>
 	<style name="LaunchTheme" parent="MainTheme">
-		<item name="android:windowBackground">@drawable/launcher_background</item>
+		<item name="android:windowBackground">@color/launcher_background</item>
 		<item name="android:windowNoTitle">true</item>
 		<item name="android:windowActionBar">false</item>
 		<item name="android:windowFullscreen">true</item>

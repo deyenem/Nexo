@@ -15,7 +15,7 @@ using Xamarin.Essentials;
 using Xamarin.Forms;
 using Newtonsoft.Json;
 
-[assembly: Dependency(typeof(WiFiSharingService))]
+[assembly: Xamarin.Forms.Dependency(typeof(WiFiSharingService))]
 namespace Nexo.Droid
 {
     public class WiFiSharingService : IWiFiSharingService
@@ -172,7 +172,10 @@ namespace Nexo.Droid
                     await writer.WriteLineAsync("HTTP/1.1 200 OK");
                     await writer.WriteLineAsync("Content-Type: application/json");
                     await writer.WriteLineAsync();
-                    await writer.WriteLineAsync(JsonConvert.SerializeObject(new { device = settings.DeviceName }));
+
+                    // Create a simple response object instead of using dynamic
+                    var response = new { device = settings.DeviceName };
+                    await writer.WriteLineAsync(JsonConvert.SerializeObject(response));
                 }
             }
             catch (Exception ex)
@@ -262,11 +265,13 @@ namespace Nexo.Droid
                         {
                             using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
                             var response = await httpClient.GetStringAsync($"http://{ip}:8080/");
-                            var deviceInfo = JsonConvert.DeserializeObject<dynamic>(response);
+
+                            // Parse JSON response properly instead of using dynamic
+                            var deviceResponse = JsonConvert.DeserializeObject<DeviceInfoResponse>(response);
 
                             devices.Add(new WiFiDevice
                             {
-                                Name = deviceInfo.device ?? "Unknown Device",
+                                Name = deviceResponse?.Device ?? "Unknown Device",
                                 IpAddress = ip,
                                 Port = 8080,
                                 IsConnected = true,
@@ -321,5 +326,12 @@ namespace Nexo.Droid
         {
             settings = newSettings;
         }
+    }
+
+    // Helper class for JSON deserialization instead of using dynamic
+    public class DeviceInfoResponse
+    {
+        [JsonProperty("device")]
+        public string Device { get; set; }
     }
 }
