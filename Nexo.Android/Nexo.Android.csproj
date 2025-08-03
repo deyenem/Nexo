@@ -91,6 +91,10 @@
     <AndroidResource Include="Resources\mipmap-xxxhdpi\icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\launcher_foreground.png" />
   </ItemGroup>
+  <!-- Only include network security config if the file exists -->
+  <ItemGroup Condition="Exists('Resources\xml\network_security_config.xml')">
+    <AndroidResource Include="Resources\xml\network_security_config.xml" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Nexo\Nexo.csproj">
       <Project>{CABF129B-4657-458F-91DD-8D7697A87C31}</Project>
