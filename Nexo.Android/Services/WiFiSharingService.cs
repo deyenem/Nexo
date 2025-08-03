@@ -29,10 +29,10 @@ namespace Nexo.Droid
         private Context context;
         private WifiManager wifiManager;
         private ConnectionSettings settings;
-        private HttpListener httpListener;
         private bool isServerRunning = false;
         private bool isAccessPointActive = false;
         private CancellationTokenSource serverCancellationToken;
+        private TcpListener tcpListener;
 
         public bool IsAccessPointActive => isAccessPointActive;
         public bool IsServerRunning => isServerRunning;
@@ -77,21 +77,24 @@ namespace Nexo.Droid
         {
             try
             {
-                // Check location permission first
-                if (!await HasLocationPermission())
-                {
-                    await RequestLocationPermission();
-                }
+                System.Diagnostics.Debug.WriteLine($"StartAccessPointAsync called with: {hotspotName}");
 
-                // For Android 10+ we need to guide user to enable hotspot manually
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
+                // Guide user to enable hotspot manually (works for all Android versions)
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    return await StartAccessPointModern(hotspotName, password);
-                }
-                else
-                {
-                    return await StartAccessPointLegacy(hotspotName, password);
-                }
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Enable Hotspot",
+                        $"Please enable WiFi Hotspot manually:\n\n" +
+                        $"1. Go to Settings → WiFi Hotspot\n" +
+                        $"2. Set Network name: {hotspotName}\n" +
+                        $"3. Set Password: {password}\n" +
+                        $"4. Turn on the hotspot\n" +
+                        $"5. Return to the app and start the server",
+                        "OK");
+                });
+
+                isAccessPointActive = true;
+                return true;
             }
             catch (Exception ex)
             {
@@ -100,121 +103,17 @@ namespace Nexo.Droid
             }
         }
 
-        private async Task<bool> StartAccessPointModern(string hotspotName, string password)
-        {
-            try
-            {
-                // For Android 10+, we need to use the Settings panel
-                var intent = new Intent(Android.Provider.Settings.ActionWirelessSettings);
-                intent.SetFlags(ActivityFlags.NewTask);
-                context.StartActivity(intent);
-
-                // Show instructions to user
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Enable Hotspot",
-                        $"Please enable WiFi Hotspot manually:\n\n" +
-                        $"1. Go to WiFi Hotspot settings\n" +
-                        $"2. Set Network name: {hotspotName}\n" +
-                        $"3. Set Password: {password}\n" +
-                        $"4. Turn on the hotspot\n" +
-                        $"5. Return to the app",
-                        "OK");
-                });
-
-                // Wait for user to return and check hotspot status
-                await Task.Delay(5000);
-                isAccessPointActive = IsHotspotEnabled();
-                return isAccessPointActive;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"StartAccessPointModern Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task<bool> StartAccessPointLegacy(string hotspotName, string password)
-        {
-            try
-            {
-                // This method works for older Android versions
-                var method = wifiManager.Class.GetMethod("setWifiApEnabled");
-                var wifiConfiguration = CreateWifiConfig(hotspotName, password);
-
-                var result = (bool)method.Invoke(wifiManager, wifiConfiguration, true);
-
-                if (result)
-                {
-                    isAccessPointActive = true;
-                    await Task.Delay(3000); // Wait for hotspot to fully start
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"StartAccessPointLegacy Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private Java.Lang.Object CreateWifiConfig(string ssid, string password)
-        {
-            try
-            {
-                var wifiConfigClass = Java.Lang.Class.ForName("android.net.wifi.WifiConfiguration");
-                var wifiConfig = wifiConfigClass.NewInstance();
-
-                var ssidField = wifiConfigClass.GetField("SSID");
-                ssidField.Set(wifiConfig, $"\"{ssid}\"");
-
-                var preSharedKeyField = wifiConfigClass.GetField("preSharedKey");
-                preSharedKeyField.Set(wifiConfig, $"\"{password}\"");
-
-                return wifiConfig;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"CreateWifiConfig Error: {ex.Message}");
-                return null;
-            }
-        }
-
-        private bool IsHotspotEnabled()
-        {
-            try
-            {
-                var method = wifiManager.Class.GetMethod("isWifiApEnabled");
-                return (bool)method.Invoke(wifiManager);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public async Task<bool> StopAccessPointAsync()
         {
             try
             {
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    // Guide user to turn off hotspot manually
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        await Application.Current.MainPage.DisplayAlert(
-                            "Turn Off Hotspot",
-                            "Please turn off the WiFi Hotspot manually from Settings.",
-                            "OK");
-                    });
-                }
-                else
-                {
-                    var method = wifiManager.Class.GetMethod("setWifiApEnabled");
-                    method.Invoke(wifiManager, null, false);
-                }
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Turn Off Hotspot",
+                        "Please turn off the WiFi Hotspot manually from Settings.",
+                        "OK");
+                });
 
                 isAccessPointActive = false;
                 return true;
@@ -230,19 +129,22 @@ namespace Nexo.Droid
         {
             try
             {
-                if (!await HasLocationPermission())
-                {
-                    await RequestLocationPermission();
-                }
+                System.Diagnostics.Debug.WriteLine($"ConnectToDeviceAsync called for: {ssid}");
 
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
+                // Guide user to connect manually
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    return await ConnectToWifiModern(ssid, password);
-                }
-                else
-                {
-                    return await ConnectToWifiLegacy(ssid, password);
-                }
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Connect to WiFi",
+                        $"Please connect to WiFi manually:\n\n" +
+                        $"1. Go to Settings → WiFi\n" +
+                        $"2. Connect to: {ssid}\n" +
+                        $"3. Password: {password}\n" +
+                        $"4. Return to the app",
+                        "OK");
+                });
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -251,181 +153,25 @@ namespace Nexo.Droid
             }
         }
 
-        private async Task<bool> ConnectToWifiModern(string ssid, string password)
-        {
-            try
-            {
-                // For Android 10+, guide user to connect manually
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Connect to WiFi",
-                        $"Please connect to the WiFi network manually:\n\n" +
-                        $"Network: {ssid}\n" +
-                        $"Password: {password}\n\n" +
-                        $"Go to WiFi settings and connect to this network.",
-                        "OK");
-                });
-
-                var intent = new Intent(Android.Provider.Settings.ActionWifiSettings);
-                intent.SetFlags(ActivityFlags.NewTask);
-                context.StartActivity(intent);
-
-                // Wait for user to connect
-                await Task.Delay(10000);
-                return await IsConnectedToWifi(ssid);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ConnectToWifiModern Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task<bool> ConnectToWifiLegacy(string ssid, string password)
-        {
-            try
-            {
-                var wifiConfig = new WifiConfiguration
-                {
-                    Ssid = $"\"{ssid}\"",
-                    PreSharedKey = $"\"{password}\""
-                };
-
-                int networkId = wifiManager.AddNetwork(wifiConfig);
-                if (networkId != -1)
-                {
-                    wifiManager.EnableNetwork(networkId, true);
-                    wifiManager.Reconnect();
-
-                    // Wait for connection
-                    for (int i = 0; i < 20; i++)
-                    {
-                        await Task.Delay(1000);
-                        if (await IsConnectedToWifi(ssid))
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ConnectToWifiLegacy Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task<bool> IsConnectedToWifi(string ssid)
-        {
-            try
-            {
-                var wifiInfo = wifiManager.ConnectionInfo;
-                string currentSsid = null;
-
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q)
-                {
-                    // For Android 10+, use NetworkCallback or check network info differently
-                    var connectivityManager = context.GetSystemService(Context.ConnectivityService) as Android.Net.ConnectivityManager;
-                    var activeNetwork = connectivityManager?.ActiveNetwork;
-                    var networkInfo = connectivityManager?.GetNetworkInfo(activeNetwork);
-
-                    if (networkInfo != null && networkInfo.IsConnected && networkInfo.Type == Android.Net.ConnectivityType.Wifi)
-                    {
-                        // For newer versions, we can't easily get SSID due to privacy restrictions
-                        // We'll assume connection is successful if we're connected to WiFi
-                        return true;
-                    }
-                }
-                else
-                {
-                    // For older Android versions - try different property access methods
-                    try
-                    {
-                        // Try the most common property name
-                        currentSsid = GetWifiSsid(wifiInfo);
-                    }
-                    catch
-                    {
-                        // Fallback: try reflection for SSID access
-                        try
-                        {
-                            var ssidField = wifiInfo?.Class?.GetDeclaredField("mSSID");
-                            if (ssidField != null)
-                            {
-                                ssidField.Accessible = true;
-                                currentSsid = ssidField.Get(wifiInfo)?.ToString()?.Trim('"');
-                            }
-                        }
-                        catch
-                        {
-                            return false;
-                        }
-                    }
-                }
-
-                return !string.IsNullOrEmpty(currentSsid) && currentSsid.Equals(ssid, StringComparison.OrdinalIgnoreCase);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"IsConnectedToWifi Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private string GetWifiSsid(WifiInfo wifiInfo)
-        {
-            if (wifiInfo == null) return null;
-
-            try
-            {
-                // Use reflection to get SSID since direct property access is inconsistent
-                var method = wifiInfo.Class.GetMethod("getSSID");
-                if (method != null)
-                {
-                    var result = method.Invoke(wifiInfo);
-                    return result?.ToString()?.Trim('"');
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GetWifiSsid method access error: {ex.Message}");
-            }
-
-            try
-            {
-                // Try field access as fallback
-                var ssidField = wifiInfo.Class.GetDeclaredField("mSSID");
-                if (ssidField != null)
-                {
-                    ssidField.Accessible = true;
-                    var result = ssidField.Get(wifiInfo);
-                    return result?.ToString()?.Trim('"');
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GetWifiSsid field access error: {ex.Message}");
-            }
-
-            return null;
-        }
-
         public async Task<bool> StartFileServerAsync(int port = 8080)
         {
             try
             {
                 if (isServerRunning)
+                {
+                    System.Diagnostics.Debug.WriteLine("Server already running");
                     return true;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"Starting file server on port {port}");
 
                 serverCancellationToken = new CancellationTokenSource();
 
-                // Start HTTP server
-                _ = Task.Run(() => StartHttpServer(port, serverCancellationToken.Token));
+                // Start simple HTTP server
+                _ = Task.Run(() => StartSimpleHttpServer(port, serverCancellationToken.Token));
 
                 isServerRunning = true;
+                System.Diagnostics.Debug.WriteLine("File server started successfully");
                 return true;
             }
             catch (Exception ex)
@@ -435,36 +181,41 @@ namespace Nexo.Droid
             }
         }
 
-        private async Task StartHttpServer(int port, CancellationToken cancellationToken)
+        private async Task StartSimpleHttpServer(int port, CancellationToken cancellationToken)
         {
             try
             {
-                var listener = new TcpListener(IPAddress.Any, port);
-                listener.Start();
+                tcpListener = new TcpListener(IPAddress.Any, port);
+                tcpListener.Start();
 
-                System.Diagnostics.Debug.WriteLine($"HTTP Server started on port {port}");
+                System.Diagnostics.Debug.WriteLine($"HTTP Server listening on port {port}");
 
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested && isServerRunning)
                 {
                     try
                     {
-                        var tcpClient = await AcceptTcpClientAsync(listener, cancellationToken);
+                        var tcpClient = await AcceptTcpClientAsync(tcpListener, cancellationToken);
                         if (tcpClient != null)
                         {
+                            System.Diagnostics.Debug.WriteLine("Client connected to server");
                             _ = Task.Run(() => HandleHttpRequest(tcpClient), cancellationToken);
                         }
                     }
                     catch (Exception ex) when (!(ex is OperationCanceledException))
                     {
                         System.Diagnostics.Debug.WriteLine($"HTTP Server Accept Error: {ex.Message}");
+                        await Task.Delay(1000, cancellationToken);
                     }
                 }
-
-                listener?.Stop();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"HTTP Server Error: {ex.Message}");
+            }
+            finally
+            {
+                tcpListener?.Stop();
+                System.Diagnostics.Debug.WriteLine("HTTP Server stopped");
             }
         }
 
@@ -477,15 +228,17 @@ namespace Nexo.Droid
 
                 var completedTask = await Task.WhenAny(tcpClientTask, delayTask);
 
-                if (completedTask == tcpClientTask)
+                if (completedTask == tcpClientTask && !cancellationToken.IsCancellationRequested)
                 {
                     return await tcpClientTask;
                 }
 
                 return null;
             }
-            catch
+            catch (Exception ex)
             {
+                if (!(ex is OperationCanceledException))
+                    System.Diagnostics.Debug.WriteLine($"AcceptTcpClientAsync Error: {ex.Message}");
                 return null;
             }
         }
@@ -499,27 +252,27 @@ namespace Nexo.Droid
                 using (var reader = new StreamReader(stream, Encoding.UTF8))
                 using (var writer = new StreamWriter(stream, Encoding.UTF8))
                 {
-                    // Read HTTP request
+                    // Read HTTP request line
                     var requestLine = await reader.ReadLineAsync();
-                    var headers = new List<string>();
+                    System.Diagnostics.Debug.WriteLine($"HTTP Request: {requestLine}");
 
+                    // Skip headers
                     string line;
                     while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
                     {
-                        headers.Add(line);
+                        // Skip headers
                     }
-
-                    System.Diagnostics.Debug.WriteLine($"HTTP Request: {requestLine}");
 
                     // Create response
                     var deviceInfo = new
                     {
                         device = settings.DeviceName,
-                        timestamp = DateTime.UtcNow,
-                        status = "online"
+                        timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                        status = "online",
+                        ip = GetLocalIpAddress()
                     };
 
-                    var jsonResponse = JsonConvert.SerializeObject(deviceInfo);
+                    var jsonResponse = JsonConvert.SerializeObject(deviceInfo, Formatting.Indented);
                     var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
 
                     // Send HTTP response
@@ -540,13 +293,34 @@ namespace Nexo.Droid
             }
         }
 
+        private string GetLocalIpAddress()
+        {
+            try
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        return ip.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetLocalIpAddress Error: {ex.Message}");
+            }
+            return "127.0.0.1";
+        }
+
         public async Task<bool> StopFileServerAsync()
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("Stopping file server");
                 isServerRunning = false;
                 serverCancellationToken?.Cancel();
-                httpListener?.Stop();
+                tcpListener?.Stop();
                 return true;
             }
             catch (Exception ex)
@@ -587,218 +361,206 @@ namespace Nexo.Droid
 
             try
             {
-                // Check location permission
+                System.Diagnostics.Debug.WriteLine("=== Starting Device Scan ===");
+
+                // Check permissions first
                 if (!await HasLocationPermission())
                 {
-                    System.Diagnostics.Debug.WriteLine("Location permission not granted for WiFi scanning");
-                    return devices;
-                }
-
-                // Start WiFi scan
-                bool scanStarted = wifiManager.StartScan();
-                if (!scanStarted)
-                {
-                    System.Diagnostics.Debug.WriteLine("Failed to start WiFi scan");
-                }
-
-                // Wait for scan to complete
-                await Task.Delay(3000);
-
-                // Get scan results
-                var scanResults = wifiManager.ScanResults;
-                System.Diagnostics.Debug.WriteLine($"Found {scanResults?.Count ?? 0} WiFi networks");
-
-                if (scanResults != null)
-                {
-                    foreach (var result in scanResults)
+                    System.Diagnostics.Debug.WriteLine("Location permission not granted - requesting");
+                    var granted = await RequestLocationPermission();
+                    if (!granted)
                     {
-                        string ssid = null;
-                        string bssid = null;
+                        System.Diagnostics.Debug.WriteLine("Location permission denied");
 
-                        try
+                        // Add a message device to show permission issue
+                        devices.Add(new WiFiDevice
                         {
-                            // Try to get SSID and BSSID safely using different methods
-                            ssid = GetScanResultSsid(result);
-                            bssid = GetScanResultBssid(result);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error getting scan result info: {ex.Message}");
-                            continue;
-                        }
+                            Name = "⚠️ Location Permission Required",
+                            IpAddress = "0.0.0.0",
+                            Port = 0,
+                            IsConnected = false,
+                            Role = DeviceRole.AccessPoint,
+                            DeviceId = "permission_required"
+                        });
 
-                        System.Diagnostics.Debug.WriteLine($"Found network: {ssid}");
-
-                        if (!string.IsNullOrEmpty(ssid) && ssid.StartsWith("FileShare_"))
-                        {
-                            devices.Add(new WiFiDevice
-                            {
-                                Name = ssid,
-                                IpAddress = "192.168.43.1", // Default hotspot IP
-                                Port = 8080,
-                                IsConnected = false,
-                                Role = DeviceRole.AccessPoint,
-                                DeviceId = bssid ?? "unknown"
-                            });
-
-                            System.Diagnostics.Debug.WriteLine($"Added FileShare device: {ssid}");
-                        }
+                        return devices;
                     }
                 }
 
-                // Also check for active connections on common IPs
-                var commonIps = new[] { "192.168.43.1", "192.168.1.1", "192.168.0.1", "10.0.0.1" };
+                // Try WiFi scanning first
+                await ScanWiFiNetworks(devices);
 
-                foreach (var ip in commonIps)
+                // Scan common hotspot IPs
+                await ScanCommonIPs(devices);
+
+                // Add current device info for testing
+                devices.Add(new WiFiDevice
                 {
-                    if (await TestConnection(ip, 8080))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Found active server at {ip}:8080");
+                    Name = $"📱 This Device ({settings.DeviceName})",
+                    IpAddress = GetLocalIpAddress(),
+                    Port = settings.ServerPort,
+                    IsConnected = true,
+                    Role = DeviceRole.AccessPoint,
+                    DeviceId = "local_device"
+                });
 
-                        try
-                        {
-                            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                            var response = await httpClient.GetStringAsync($"http://{ip}:8080/");
-
-                            var deviceResponse = JsonConvert.DeserializeObject<DeviceInfoResponse>(response);
-
-                            devices.Add(new WiFiDevice
-                            {
-                                Name = deviceResponse?.Device ?? "Unknown Device",
-                                IpAddress = ip,
-                                Port = 8080,
-                                IsConnected = true,
-                                Role = DeviceRole.AccessPoint
-                            });
-                        }
-                        catch
-                        {
-                            devices.Add(new WiFiDevice
-                            {
-                                Name = $"File Server ({ip})",
-                                IpAddress = ip,
-                                Port = 8080,
-                                IsConnected = true,
-                                Role = DeviceRole.AccessPoint
-                            });
-                        }
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Total devices found: {devices.Count}");
+                System.Diagnostics.Debug.WriteLine($"=== Scan Complete: Found {devices.Count} devices ===");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ScanForDevices Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ScanForDevicesAsync Error: {ex.Message}");
+
+                // Add error device for debugging
+                devices.Add(new WiFiDevice
+                {
+                    Name = $"❌ Scan Error: {ex.Message}",
+                    IpAddress = "0.0.0.0",
+                    Port = 0,
+                    IsConnected = false,
+                    Role = DeviceRole.AccessPoint,
+                    DeviceId = "error"
+                });
             }
 
             return devices;
         }
 
-        private string GetScanResultSsid(ScanResult result)
+        private async Task ScanWiFiNetworks(List<WiFiDevice> devices)
         {
-            if (result == null) return null;
-
             try
             {
-                // Try reflection methods since direct property access is inconsistent
-                var ssidField = result.Class.GetDeclaredField("SSID");
-                if (ssidField != null)
-                {
-                    ssidField.Accessible = true;
-                    var ssidValue = ssidField.Get(result)?.ToString()?.Trim('"');
-                    if (!string.IsNullOrEmpty(ssidValue))
-                        return ssidValue;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GetScanResultSsid field access error: {ex.Message}");
-            }
+                System.Diagnostics.Debug.WriteLine("Scanning WiFi networks...");
 
-            try
-            {
-                // Try method invocation approach
-                var toString = result.ToString();
-                if (!string.IsNullOrEmpty(toString))
+                bool scanStarted = wifiManager.StartScan();
+                System.Diagnostics.Debug.WriteLine($"WiFi scan started: {scanStarted}");
+
+                if (scanStarted)
                 {
-                    // Parse SSID from toString output like "SSID: NetworkName, BSSID: ..."
-                    var ssidIndex = toString.IndexOf("SSID: ");
-                    if (ssidIndex >= 0)
+                    // Wait for scan to complete
+                    await Task.Delay(5000);
+
+                    var scanResults = wifiManager.ScanResults;
+                    System.Diagnostics.Debug.WriteLine($"Found {scanResults?.Count ?? 0} WiFi networks");
+
+                    if (scanResults != null)
                     {
-                        var start = ssidIndex + 6; // Length of "SSID: "
-                        var end = toString.IndexOf(",", start);
-                        if (end > start)
+                        foreach (var result in scanResults)
                         {
-                            return toString.Substring(start, end - start).Trim().Trim('"');
-                        }
-                        else
-                        {
-                            // If no comma found, take rest of string
-                            return toString.Substring(start).Trim().Trim('"');
+                            try
+                            {
+                                string ssid = GetScanResultSsid(result);
+                                if (!string.IsNullOrEmpty(ssid))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Network found: {ssid}");
+
+                                    if (ssid.StartsWith("FileShare_") || ssid.Contains("FileShare"))
+                                    {
+                                        devices.Add(new WiFiDevice
+                                        {
+                                            Name = $"📡 {ssid}",
+                                            IpAddress = "192.168.43.1", // Default hotspot IP
+                                            Port = 8080,
+                                            IsConnected = false,
+                                            Role = DeviceRole.AccessPoint,
+                                            DeviceId = GetScanResultBssid(result) ?? "unknown"
+                                        });
+
+                                        System.Diagnostics.Debug.WriteLine($"Added FileShare device: {ssid}");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error processing scan result: {ex.Message}");
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"GetScanResultSsid parsing error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"WiFi scan error: {ex.Message}");
             }
-
-            return null;
         }
 
-        private string GetScanResultBssid(ScanResult result)
+        private async Task ScanCommonIPs(List<WiFiDevice> devices)
         {
-            if (result == null) return null;
+            System.Diagnostics.Debug.WriteLine("Scanning common IPs...");
 
+            var commonIps = new[]
+            {
+                "192.168.43.1",  // Android hotspot default
+                "192.168.1.1",   // Common router
+                "192.168.0.1",   // Common router  
+                "10.0.0.1",      // Some routers
+                "192.168.1.100", // Common device IP
+                "192.168.1.101", // Common device IP
+                "192.168.43.100" // Hotspot client IP
+            };
+
+            var tasks = new List<Task>();
+            foreach (var ip in commonIps)
+            {
+                tasks.Add(TestIPAndAddDevice(ip, devices));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task TestIPAndAddDevice(string ip, List<WiFiDevice> devices)
+        {
             try
             {
-                // Try reflection methods since direct property access is inconsistent
-                var bssidField = result.Class.GetDeclaredField("BSSID");
-                if (bssidField != null)
-                {
-                    bssidField.Accessible = true;
-                    var bssidValue = bssidField.Get(result)?.ToString();
-                    if (!string.IsNullOrEmpty(bssidValue))
-                        return bssidValue;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GetScanResultBssid field access error: {ex.Message}");
-            }
+                System.Diagnostics.Debug.WriteLine($"Testing connection to {ip}:8080");
 
-            try
-            {
-                // Try method invocation approach
-                var toString = result.ToString();
-                if (!string.IsNullOrEmpty(toString))
+                if (await TestConnection(ip, 8080))
                 {
-                    // Parse BSSID from toString output like "SSID: NetworkName, BSSID: aa:bb:cc:dd:ee:ff"
-                    var bssidIndex = toString.IndexOf("BSSID: ");
-                    if (bssidIndex >= 0)
+                    System.Diagnostics.Debug.WriteLine($"✅ Found active server at {ip}:8080");
+
+                    try
                     {
-                        var start = bssidIndex + 7; // Length of "BSSID: "
-                        var end = toString.IndexOf(",", start);
-                        if (end > start)
+                        // Try to get device info
+                        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                        var response = await httpClient.GetStringAsync($"http://{ip}:8080/");
+
+                        var deviceResponse = JsonConvert.DeserializeObject<DeviceInfoResponse>(response);
+
+                        devices.Add(new WiFiDevice
                         {
-                            return toString.Substring(start, end - start).Trim();
-                        }
-                        else
+                            Name = $"🔗 {deviceResponse?.Device ?? "Unknown Device"}",
+                            IpAddress = ip,
+                            Port = 8080,
+                            IsConnected = true,
+                            Role = DeviceRole.AccessPoint,
+                            DeviceId = $"server_{ip}"
+                        });
+
+                        System.Diagnostics.Debug.WriteLine($"Added connected device: {deviceResponse?.Device} at {ip}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not get device info from {ip}: {ex.Message}");
+
+                        devices.Add(new WiFiDevice
                         {
-                            // If no comma found, take rest of string
-                            return toString.Substring(start).Trim();
-                        }
+                            Name = $"🔗 File Server ({ip})",
+                            IpAddress = ip,
+                            Port = 8080,
+                            IsConnected = true,
+                            Role = DeviceRole.AccessPoint,
+                            DeviceId = $"server_{ip}"
+                        });
                     }
                 }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ No response from {ip}:8080");
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"GetScanResultBssid parsing error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error testing {ip}: {ex.Message}");
             }
-
-            return "unknown";
         }
 
         private async Task<bool> TestConnection(string ip, int port)
@@ -810,32 +572,88 @@ namespace Nexo.Droid
                 var timeoutTask = Task.Delay(3000);
 
                 var completedTask = await Task.WhenAny(connectTask, timeoutTask);
-                var isConnected = completedTask == connectTask && client.Connected;
-
-                if (isConnected)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Successfully connected to {ip}:{port}");
-                }
-
-                return isConnected;
+                return completedTask == connectTask && client.Connected;
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"TestConnection to {ip}:{port} failed: {ex.Message}");
                 return false;
             }
+        }
+
+        private string GetScanResultSsid(ScanResult result)
+        {
+            if (result == null) return null;
+
+            try
+            {
+                // Use reflection to get SSID
+                var ssidField = result.Class.GetDeclaredField("SSID");
+                if (ssidField != null)
+                {
+                    ssidField.Accessible = true;
+                    var ssidValue = ssidField.Get(result)?.ToString()?.Trim('"');
+                    return ssidValue;
+                }
+            }
+            catch { }
+
+            try
+            {
+                // Parse from toString
+                var toString = result.ToString();
+                if (toString?.Contains("SSID: ") == true)
+                {
+                    var start = toString.IndexOf("SSID: ") + 6;
+                    var end = toString.IndexOf(",", start);
+                    if (end > start)
+                    {
+                        return toString.Substring(start, end - start).Trim().Trim('"');
+                    }
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        private string GetScanResultBssid(ScanResult result)
+        {
+            if (result == null) return null;
+
+            try
+            {
+                var bssidField = result.Class.GetDeclaredField("BSSID");
+                if (bssidField != null)
+                {
+                    bssidField.Accessible = true;
+                    return bssidField.Get(result)?.ToString();
+                }
+            }
+            catch { }
+
+            return "unknown";
         }
 
         private async Task<bool> HasLocationPermission()
         {
             var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            System.Diagnostics.Debug.WriteLine($"Location permission status: {status}");
             return status == PermissionStatus.Granted;
         }
 
         private async Task<bool> RequestLocationPermission()
         {
-            var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-            return status == PermissionStatus.Granted;
+            try
+            {
+                var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                System.Diagnostics.Debug.WriteLine($"Location permission requested, result: {status}");
+                return status == PermissionStatus.Granted;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error requesting location permission: {ex.Message}");
+                return false;
+            }
         }
 
         public ConnectionSettings GetConnectionSettings()
@@ -855,9 +673,12 @@ namespace Nexo.Droid
         public string Device { get; set; }
 
         [JsonProperty("timestamp")]
-        public DateTime Timestamp { get; set; }
+        public string Timestamp { get; set; }
 
         [JsonProperty("status")]
         public string Status { get; set; }
+
+        [JsonProperty("ip")]
+        public string Ip { get; set; }
     }
 }
