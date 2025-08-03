@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nexo.MainPage"
+             Title="Nexo"
+             BackgroundColor="{StaticResource BackgroundColor}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Frame Grid.Row="0" BackgroundColor="{StaticResource PrimaryColor}" CornerRadius="0" Padding="15" Margin="0">
+            <StackLayout Orientation="Horizontal">
+                <Label Text="📁" FontSize="24" VerticalOptions="Center" TextColor="White" />
+                <Label Text="Nexo File Explorer" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" TextColor="White" HorizontalOptions="StartAndExpand" />
+                <Label x:Name="lblWiFiStatus" Text="📶" FontSize="20" VerticalOptions="Center" TextColor="White" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Quick Actions -->
+        <Frame Grid.Row="1" BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="10" Margin="10,10,10,0" HasShadow="True">
+            <StackLayout Orientation="Horizontal" Spacing="10">
+                <Button Text="🏠 Home" FontSize="12" BackgroundColor="{StaticResource SuccessColor}" TextColor="White" CornerRadius="15" Clicked="OnHomeClicked" HorizontalOptions="FillAndExpand" />
+                <Button Text="📂 Storage" FontSize="12" BackgroundColor="{StaticResource WarningColor}" TextColor="White" CornerRadius="15" Clicked="OnStorageClicked" HorizontalOptions="FillAndExpand" />
+                <Button Text="📶 WiFi" FontSize="12" BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" CornerRadius="15" Clicked="OnWiFiClicked" HorizontalOptions="FillAndExpand" />
+                <Button Text="🔗 Connect" FontSize="12" BackgroundColor="{StaticResource AccentColor}" TextColor="White" CornerRadius="15" Clicked="OnConnectClicked" HorizontalOptions="FillAndExpand" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Navigation -->
+        <Frame Grid.Row="2" BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="10" Margin="10,5,10,0" HasShadow="False">
+            <StackLayout Orientation="Horizontal" Spacing="10">
+                <Button x:Name="btnBack" Text="⬅️ Back" FontSize="12" BackgroundColor="Transparent" TextColor="{StaticResource PrimaryColor}" Clicked="OnBackClicked" IsEnabled="False" />
+                <Button Text="🔄 Refresh" FontSize="12" BackgroundColor="Transparent" TextColor="{StaticResource PrimaryColor}" Clicked="OnRefreshClicked" HorizontalOptions="EndAndExpand" />
+            </StackLayout>
+        </Frame>
+
+        <!-- File List -->
+        <RefreshView Grid.Row="3" x:Name="refreshView" Margin="10,5,10,0">
+            <CollectionView x:Name="filesCollectionView" ItemsSource="{Binding}" SelectionMode="Single" SelectionChanged="OnFileSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="15,10" BackgroundColor="{StaticResource SurfaceColor}" Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- File Icon -->
+                            <Label Grid.Column="0" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" />
+
+                            <!-- File Info -->
+                            <StackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding Name}" FontSize="16" TextColor="{StaticResource TextColor}" LineBreakMode="TailTruncation" />
+                                <StackLayout Orientation="Horizontal" Spacing="10">
+                                    <Label Text="{Binding SizeFormatted}" FontSize="12" TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="{Binding ModifiedDate, StringFormat='{0:MMM dd, yyyy}'}" FontSize="12" TextColor="{StaticResource SecondaryTextColor}" />
+                                </StackLayout>
+                            </StackLayout>
+
+                            <!-- Action Button -->
+                            <Button Grid.Column="3" Text="📤 Share" FontSize="12" BackgroundColor="{StaticResource AccentColor}" TextColor="White" 
+                                    CornerRadius="15" Padding="5" Clicked="OnShareFileClicked" CommandParameter="{Binding}"
+                                    IsVisible="{Binding IsDirectory, Converter={StaticResource InverseBooleanConverter}}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Status Bar -->
+        <Frame Grid.Row="4" BackgroundColor="{StaticResource PrimaryColor}" CornerRadius="0" Padding="10" Margin="0">
+            <StackLayout Orientation="Horizontal">
+                <Label x:Name="lblCurrentPath" Text="/" FontSize="12" TextColor="White" HorizontalOptions="StartAndExpand" LineBreakMode="HeadTruncation" />
+                <Label x:Name="lblStatus" Text="Ready" FontSize="12" TextColor="White" HorizontalOptions="End" />
+            </StackLayout>
+        </Frame>
+    </Grid>
+</ContentPage>

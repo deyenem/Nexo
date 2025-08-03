@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nexo.DeviceSelectionPage"
+             Title="Send File"
+             BackgroundColor="{StaticResource BackgroundColor}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Frame Grid.Row="0" BackgroundColor="{StaticResource AccentColor}" CornerRadius="10" Padding="15" Margin="20,20,20,10">
+            <StackLayout Spacing="10">
+                <StackLayout Orientation="Horizontal">
+                    <Label Text="📤" FontSize="24" VerticalOptions="Center" TextColor="White" />
+                    <Label Text="Send File" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" TextColor="White" />
+                </StackLayout>
+                <Label x:Name="lblFileName" Text="📄 filename.txt (1.2 MB)" FontSize="14" TextColor="White" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Instructions -->
+        <Frame Grid.Row="1" BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15" Margin="20,0,20,10">
+            <Label Text="📱 Select a device to send your file to:" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" HorizontalOptions="Center" />
+        </Frame>
+
+        <!-- Connected Devices -->
+        <CollectionView Grid.Row="2" x:Name="devicesCollectionView" SelectionMode="Single" SelectionChanged="OnDeviceSelected" Margin="20,0">
+            <CollectionView.EmptyView>
+                <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="20">
+                    <Label Text="❌ No connected devices found" FontSize="16" TextColor="{StaticResource SecondaryTextColor}" HorizontalOptions="Center" />
+                    <Label Text="Make sure other devices are connected to your hotspot" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" HorizontalOptions="Center" />
+                </StackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15" Margin="0,5" HasShadow="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Column="0" Text="📱" FontSize="24" VerticalOptions="Center" />
+
+                            <StackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+                                <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                                <Label Text="{Binding IpAddress}" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" />
+                            </StackLayout>
+
+                            <Label Grid.Column="2" Text="📤" FontSize="20" VerticalOptions="Center" TextColor="{StaticResource AccentColor}" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Status -->
+        <Frame Grid.Row="3" BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15" Margin="20,10,20,20">
+            <Label x:Name="lblStatus" Text="Select a device to send the file" FontSize="14" TextColor="{StaticResource TextColor}" HorizontalOptions="Center" />
+        </Frame>
+
+    </Grid>
+</ContentPage>

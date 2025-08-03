@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nexo.WelcomePage"
+             BackgroundColor="{StaticResource BackgroundColor}"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Main Content -->
+        <ScrollView Grid.Row="0" Padding="30,60,30,30">
+            <StackLayout Spacing="30" VerticalOptions="CenterAndExpand">
+
+                <!-- Logo & Title -->
+                <StackLayout Spacing="20" HorizontalOptions="Center">
+                    <Label Text="📱" FontSize="80" HorizontalOptions="Center" />
+                    <Label Text="Welcome to Nexo" FontSize="28" FontAttributes="Bold" 
+                           TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                    <Label Text="Share files instantly over WiFi" FontSize="16" 
+                           TextColor="{StaticResource SecondaryTextColor}" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <!-- Features -->
+                <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="15" Padding="20" HasShadow="True">
+                    <StackLayout Spacing="20">
+                        <Label Text="✨ What you can do:" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+
+                        <StackLayout Orientation="Horizontal" Spacing="15">
+                            <Label Text="📁" FontSize="20" VerticalOptions="Start" />
+                            <StackLayout>
+                                <Label Text="Browse Files" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                                <Label Text="Navigate through your device storage easily" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" />
+                            </StackLayout>
+                        </StackLayout>
+
+                        <StackLayout Orientation="Horizontal" Spacing="15">
+                            <Label Text="📡" FontSize="20" VerticalOptions="Start" />
+                            <StackLayout>
+                                <Label Text="Create Hotspot" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                                <Label Text="Share files by creating a WiFi hotspot" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" />
+                            </StackLayout>
+                        </StackLayout>
+
+                        <StackLayout Orientation="Horizontal" Spacing="15">
+                            <Label Text="🔗" FontSize="20" VerticalOptions="Start" />
+                            <StackLayout>
+                                <Label Text="Connect to Others" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                                <Label Text="Join other devices and share files instantly" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" />
+                            </StackLayout>
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Privacy Note -->
+                <Frame BackgroundColor="#FFEB3B" CornerRadius="10" Padding="15">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <Label Text="🔒" FontSize="20" VerticalOptions="Start" />
+                        <Label Text="Privacy First: All file sharing happens locally between devices. We respect your privacy and only access files when you choose to share them." 
+                               FontSize="14" TextColor="#E65100" />
+                    </StackLayout>
+                </Frame>
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Bottom Actions -->
+        <StackLayout Grid.Row="1" Padding="30,20" Spacing="15">
+            <Button Text="🚀 Get Started" BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" 
+                    CornerRadius="25" HeightRequest="50" FontSize="16" FontAttributes="Bold" Clicked="OnGetStartedClicked" />
+            <Button Text="📶 Setup WiFi Sharing" BackgroundColor="{StaticResource SuccessColor}" TextColor="White" 
+                    CornerRadius="25" HeightRequest="50" FontSize="14" Clicked="OnSetupWiFiClicked" />
+        </StackLayout>
+    </Grid>
+</ContentPage>

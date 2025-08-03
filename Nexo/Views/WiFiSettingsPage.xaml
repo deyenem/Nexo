@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nexo.WiFiSettingsPage"
+             Title="WiFi Sharing Settings"
+             BackgroundColor="{StaticResource BackgroundColor}">
+
+    <ScrollView Padding="20">
+        <StackLayout Spacing="20">
+
+            <!-- Header -->
+            <Frame BackgroundColor="{StaticResource PrimaryColor}" CornerRadius="10" Padding="15">
+                <StackLayout Orientation="Horizontal">
+                    <Label Text="📶" FontSize="24" VerticalOptions="Center" TextColor="White" />
+                    <Label Text="WiFi File Sharing" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" TextColor="White" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Current Status -->
+            <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="📊 Current Status:" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="Mode:" TextColor="{StaticResource TextColor}" />
+                        <Label x:Name="lblCurrentMode" Text="Disconnected" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="Device Name:" TextColor="{StaticResource TextColor}" />
+                        <Label x:Name="lblDeviceName" Text="Unknown" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Hotspot Settings -->
+            <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="📡 Hotspot Settings:" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+
+                    <StackLayout>
+                        <Label Text="Hotspot Name:" TextColor="{StaticResource TextColor}" />
+                        <Entry x:Name="entryHotspotName" Text="FileShare_MyPhone" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+
+                    <StackLayout>
+                        <Label Text="Password:" TextColor="{StaticResource TextColor}" />
+                        <Entry x:Name="entryPassword" Text="fileshare123" IsPassword="True" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+
+                    <StackLayout>
+                        <Label Text="Server Port:" TextColor="{StaticResource TextColor}" />
+                        <Entry x:Name="entryPort" Text="8080" Keyboard="Numeric" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Device Name -->
+            <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="📱 Device Settings:" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                    <StackLayout>
+                        <Label Text="Your Device Name:" TextColor="{StaticResource TextColor}" />
+                        <Entry x:Name="entryDeviceName" Text="My Phone" TextColor="{StaticResource TextColor}" />
+                    </StackLayout>
+                </StackLayout>
+            </Frame>
+
+            <!-- Actions -->
+            <StackLayout Spacing="15">
+                <Button Text="📡 Create Hotspot" BackgroundColor="{StaticResource SuccessColor}" TextColor="White" 
+                        CornerRadius="25" HeightRequest="50" FontSize="16" Clicked="OnCreateHotspotClicked" />
+
+                <Button Text="🔍 Scan for Devices" BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" 
+                        CornerRadius="25" HeightRequest="50" FontSize="16" Clicked="OnScanDevicesClicked" />
+
+                <Button Text="❌ Stop Sharing" BackgroundColor="{StaticResource AccentColor}" TextColor="White" 
+                        CornerRadius="25" HeightRequest="50" FontSize="16" Clicked="OnStopSharingClicked" />
+
+                <Button Text="💾 Save Settings" BackgroundColor="{StaticResource WarningColor}" TextColor="White" 
+                        CornerRadius="25" HeightRequest="50" FontSize="16" Clicked="OnSaveSettingsClicked" />
+            </StackLayout>
+
+            <!-- Status -->
+            <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15">
+                <Label x:Name="lblStatus" Text="Ready" FontSize="14" TextColor="{StaticResource TextColor}" HorizontalOptions="Center" />
+            </Frame>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

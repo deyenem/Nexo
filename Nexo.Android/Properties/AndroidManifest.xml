@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
+          android:versionCode="1" 
+          android:versionName="1.0" 
+          package="com.yourcompany.nexo">
+    
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="31" />
+    
+    <!-- Storage Permissions -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    
+    <!-- WiFi Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Network Permission -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Hotspot Permissions (Limited on Android 10+) -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    
+    <application android:label="Nexo" 
+                 android:theme="@style/MainTheme"
+                 android:requestLegacyExternalStorage="true"
+                 android:usesCleartextTraffic="true">
+        
+    </application>
+</manifest>

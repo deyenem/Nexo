@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nexo.DeviceConnectionPage"
+             Title="Connect to Device"
+             BackgroundColor="{StaticResource BackgroundColor}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Frame Grid.Row="0" BackgroundColor="{StaticResource PrimaryColor}" CornerRadius="10" Padding="15" Margin="20,20,20,10">
+            <StackLayout Orientation="Horizontal">
+                <Label Text="🔍" FontSize="24" VerticalOptions="Center" TextColor="White" />
+                <Label Text="Available Devices" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" TextColor="White" />
+            </StackLayout>
+        </Frame>
+
+        <!-- Controls -->
+        <StackLayout Grid.Row="1" Orientation="Horizontal" Padding="20,0" Spacing="10">
+            <Button Text="🔄 Scan" BackgroundColor="{StaticResource SuccessColor}" TextColor="White" 
+                    CornerRadius="20" FontSize="14" Clicked="OnScanClicked" HorizontalOptions="FillAndExpand" />
+            <Button Text="🔄 Refresh" BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" 
+                    CornerRadius="20" FontSize="14" Clicked="OnRefreshClicked" HorizontalOptions="FillAndExpand" />
+        </StackLayout>
+
+        <!-- Device List -->
+        <RefreshView Grid.Row="2" x:Name="refreshView" Margin="20,10">
+            <CollectionView x:Name="devicesCollectionView" SelectionMode="Single" SelectionChanged="OnDeviceSelected">
+                <CollectionView.EmptyView>
+                    <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="20">
+                        <ActivityIndicator x:Name="scanningIndicator" IsRunning="False" IsVisible="False" Color="{StaticResource PrimaryColor}" />
+                        <Label Text="No devices found. Make sure other device has hotspot enabled." 
+                               FontSize="16" TextColor="{StaticResource SecondaryTextColor}" HorizontalOptions="Center" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15" Margin="0,5" HasShadow="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Column="0" Text="📱" FontSize="24" VerticalOptions="Center" />
+
+                                <StackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+                                    <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource TextColor}" />
+                                    <Label Text="{Binding IpAddress}" FontSize="14" TextColor="{StaticResource SecondaryTextColor}" />
+                                </StackLayout>
+
+                                <Label Grid.Column="2" Text="{Binding IsConnected, StringFormat='{0}'}" 
+                                       FontSize="20" VerticalOptions="Center" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Status -->
+        <Frame Grid.Row="3" BackgroundColor="{StaticResource SurfaceColor}" CornerRadius="10" Padding="15" Margin="20,10,20,20">
+            <Label x:Name="lblStatus" Text="Tap 'Scan' to find nearby devices" FontSize="14" TextColor="{StaticResource TextColor}" HorizontalOptions="Center" />
+        </Frame>
+
+    </Grid>
+</ContentPage>
